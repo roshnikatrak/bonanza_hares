@@ -1,0 +1,74 @@
+---
+title: "Bonanza Hares"
+author: "Roshni Katrak-Adefowora"
+date: "11/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lubridate)
+library(ggbeeswarm)
+```
+
+###### ONLY FINAL TEXT AND FIGURES INCLUDED
+
+## Introduction
+
+Citation: Kielland, K., F.S. Chapin, R.W. Ruess, and Bonanza Creek LTER. 2017. Snowshoe hare physical data in Bonanza Creek Experimental Forest: 1999-Present ver 22. Environmental Data Initiative. https://doi.org/10.6073/pasta/03dce4856d79b91557d8e6ce2cbcdc14
+
+## Data and Analyses
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+hares <- read_csv(here("data", "bonanza_hares.csv"))
+```
+
+## Exploratory findings
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Annual juvenile hare trap counts
+j_hares <- hares %>% 
+  filter(age=="j") #juveniles only
+
+j_hare_counts <- j_hares %>% 
+  mutate(date=mdy(date)) %>% #convert to Date class
+  mutate(year=year(date)) %>% #add year column
+  count(year) #total number of hares each year
+
+ggplot(data=j_hare_counts, aes(x=year, y=n))+
+  geom_bar(stat="identity", fill="maroon")+ #bar graph, maroon bars
+  labs(title="Total number of juvenile hare trappings each year (1999-2012)",
+       x="Year",
+       y="Number of Juvenile Hares Trapped")+
+  theme_light()
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#Compare juvenile hare weights by sex and site (grid)
+j_hares_weight <- j_hares %>% 
+  group_by(sex) %>% 
+  summarize(mean_weight = mean(weight, na.rm=TRUE),
+            sd=sd(weight, na.rm=TRUE))
+
+ggplot()+
+  geom_beeswarm(data=j_hares, aes(x=sex, y=weight, color=sex),
+                size=2.5,
+                alpha=0.4)+ #transparency
+  scale_color_manual(values = c("springgreen3","royalblue3"), na.value="darkorchid3")+ #legend colors
+  geom_point(data=j_hares_weight, aes(x=sex, y=mean_weight), #add mean points
+             size=3)+
+  geom_errorbar(data=j_hares_weight, #add error bars
+                aes(x=sex,
+                    ymax=mean_weight + sd,
+                    ymin=mean_weight - sd),
+                width=0.2)+
+  facet_wrap(~grid)+ #separate graph for each site
+  labs(title="Juvenile hare weights by sex and location",
+       x="Sex",
+       y="Weight (g)")+
+  theme_light()+
+  theme(legend.position = "none")
+```
+
